@@ -66,6 +66,7 @@ public class SinglePlayerGameTest {
 
 		assertEquals(84, game.score());
 	}
+        
 
 	// Quelques methodes utilitaires pour faciliter l'écriture des tests
 	private void rollMany(int n, int pins) {
