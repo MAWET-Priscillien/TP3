@@ -1,5 +1,7 @@
 package bowling;
 
+import java.util.ArrayList;
+
 /**
  * Cette classe a pour but d'enregistrer le nombre de quilles abattues lors des
  * lancés successifs d'<b>un seul et même</b> joueur, et de calculer le score
@@ -7,24 +9,14 @@ package bowling;
  */
 public class SinglePlayerGame {
     
-        private int tourActuel;
-        private int score;
-        private int firstBoule;
-        private int multi[];
-        private Tour tour[];
+        private ArrayList<Tour> tours;
         
 
 	/**
 	 * Constructeur
 	 */
 	public SinglePlayerGame() {
-            this.tourActuel = 1;
-            this.score = 0;
-            this.firstBoule = -1;
-            this.multi = new int[2];
-            this.multi[0] = 1;
-            this.multi[1] = 1;
-           // TODO this.tour =
+            this.tours = new ArrayList();
 	}
         
         public class Tour{
@@ -35,16 +27,19 @@ public class SinglePlayerGame {
             public Tour(){
                 this.strike = false;
                 this.spare = false;
+                this.lancers = new int[2];
                 this.lancers[0] = -1;
                 this.lancers[1] = -1;
             }
             
-            public Tour(boolean st, boolean sp, int pre, int sec){
-                this.strike = st;
-                this.spare = sp;
-                this.lancers[0] = pre;
-                this.lancers[1] = sec;
+            public boolean isEnd(){
+                return (this.strike || this.lancers[1]!=-1);
             }
+            
+            public int score(){
+                return this.lancers[0]+this.lancers[1];
+            }
+            
         }
 
 	/**
@@ -54,27 +49,26 @@ public class SinglePlayerGame {
 	 * ce lancé
 	 */
 	public void lancer(int nombreDeQuillesAbattues) {
-            if (this.tourActuel<=10){
-                this.score += (nombreDeQuillesAbattues*this.multi[0]);
-            } else {
-                this.score += nombreDeQuillesAbattues;
-            }
-            this.multi[0]=this.multi[1];
-            this.multi[1]=1;
-            if (this.firstBoule!=-1) {
-                if (this.firstBoule+nombreDeQuillesAbattues==10){
-                    // Spare
-                    this.multi[0] += 1;
+            if (this.tours.isEmpty()){
+                this.tours.add(new Tour());
+                this.tours.get(0).lancers[0]=nombreDeQuillesAbattues;
+                if (nombreDeQuillesAbattues==10){
+                    this.tours.get(0).strike=true;
+                    this.tours.get(0).lancers[1]=0;
                 }
-                this.tourActuel += 1;
-                this.firstBoule = -1;
-            } else if (nombreDeQuillesAbattues==10 && this.tourActuel<10){
-                // Strike
-                this.multi[0] += 1;
-                this.multi[1] += 1;
-                this.tourActuel += 1;
+            }
+            else if (this.tours.get(this.tours.size()-1).isEnd()){
+                this.tours.add(new Tour());
+                this.tours.get(this.tours.size()-1).lancers[0]=nombreDeQuillesAbattues;
+                if (nombreDeQuillesAbattues==10){
+                    this.tours.get(this.tours.size()-1).strike=true;
+                    this.tours.get(this.tours.size()-1).lancers[1]=0;
+                }
             } else {
-                this.firstBoule = nombreDeQuillesAbattues;
+                this.tours.get(this.tours.size()-1).lancers[1]=nombreDeQuillesAbattues;
+                if (this.tours.get(this.tours.size()-1).lancers[0]+nombreDeQuillesAbattues==10){
+                    this.tours.get(this.tours.size()-1).spare=true;
+                }
             }
 	}
         
@@ -85,6 +79,21 @@ public class SinglePlayerGame {
 	 * @return Le score du joueur
 	 */
 	public int score() {
-		return this.score;
+            int score = 0;
+            for (int i=0; i<this.tours.size(); i++){
+                if (this.tours.get(i).strike && i<9){
+                    if (this.tours.get(i+1).strike){
+                        score+= this.tours.get(i).score()+this.tours.get(i+1).score()+this.tours.get(i+2).score();
+                    }else{
+                        score+= this.tours.get(i).score()+this.tours.get(i+1).score();
+                    }
+                }
+                else if (this.tours.get(i).spare && i<9){
+                    score+= this.tours.get(i).score()+this.tours.get(i+1).lancers[0];
+                }else{
+                    score+= this.tours.get(i).score();
+                }
+            }
+            return score;
 	}
 }
